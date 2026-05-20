@@ -147,6 +147,18 @@ function assertPositiveSafeInteger(value: number, label: string): void {
   }
 }
 
+function assertNoExtraProperties(
+  input: ItemCraftingWorkOrderRecord
+): ItemCraftingWorkOrderRecord {
+  return {
+    crafterSubjectId: input.crafterSubjectId,
+    workshopId: input.workshopId,
+    discipline: input.discipline,
+    workshopTier: input.workshopTier,
+    updatedAtIso: input.updatedAtIso,
+  };
+}
+
 export function createItemCraftingWorkOrderRecord(
   input: ItemCraftingWorkOrderRecord
 ): ItemCraftingWorkOrderRecord {
@@ -162,7 +174,7 @@ export function createItemCraftingWorkOrderRecord(
     throw new Error("workshopTier must be a supported workshop tier");
   }
 
-  return Object.freeze({ ...input });
+  return Object.freeze(assertNoExtraProperties(input));
 }
 
 export function createItemCraftingThroughputAssumptions(
