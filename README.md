@@ -25,6 +25,8 @@ npm install @plasius/item-crafting
 - apprenticeship-gated access state
 - crafting discipline readiness
 - workshop boundary metadata
+- portable host descriptors for training-to-crafting handoffs
+- bounded retry and failure-policy metadata for handoff contracts
 
 ## Demo
 
@@ -36,7 +38,11 @@ node demo/example.mjs
 ## Usage
 
 ```ts
-import { createItemCraftingAccessState } from "@plasius/item-crafting";
+import {
+  createHandoffRetryPolicy,
+  createItemCraftingAccessState,
+  createItemCraftingHandoffContract,
+} from "@plasius/item-crafting";
 
 const state = createItemCraftingAccessState({
   apprenticeshipReady: true,
@@ -45,6 +51,35 @@ const state = createItemCraftingAccessState({
 });
 
 console.log(state.workshopTier);
+
+const retryPolicy = createHandoffRetryPolicy({
+  timeoutMs: 1250,
+  maxAttempts: 3,
+  retryableFailureCodes: ["CRAFTING_TIMEOUT"],
+  terminalFailureCodes: ["APPRENTICESHIP_MISSING"],
+});
+
+const handoff = createItemCraftingHandoffContract({
+  handoffId: "handoff-1",
+  apprenticeshipReady: state.apprenticeshipReady,
+  discipline: state.discipline,
+  workshopTier: state.workshopTier,
+  sourceHost: {
+    hostId: "training-authority",
+    runtime: "server",
+    transport: "http",
+    capabilityFlags: ["trace-linked"],
+  },
+  targetHost: {
+    hostId: "crafting-authority",
+    runtime: "worker",
+    transport: "queue",
+    capabilityFlags: ["replay-safe"],
+  },
+  retryPolicy,
+});
+
+console.log(handoff.targetHost.transport);
 ```
 
 ## Governance
