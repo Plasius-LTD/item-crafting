@@ -8,6 +8,8 @@ Provide a package-standard bootstrap for item-crafting authority.
 
 - package descriptor and feature-flag metadata
 - item-crafting access-state contract
+- portable handoff-host contract
+- bounded retry-policy and handoff contracts
 - access-state helper
 - demo and test scaffolding
 
