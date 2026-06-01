@@ -1,15 +1,18 @@
 import {
   ITEM_CRAFTING_FEATURE_FLAG_ID,
+  ITEM_CRAFTING_PRIVACY_SCALE_FEATURE_FLAG_ID,
+  createHandoffRetryPolicy,
   createItemCraftingAccessState,
+  createItemCraftingHandoffContract,
   createItemCraftingThroughputAssumptions,
   createItemCraftingWorkOrderRecord,
+  createPortableHandoffHost,
   defaultItemCraftingThroughputAssumptions,
   isItemCraftingDiscipline,
   isWorkshopTier,
   itemCraftingFieldPolicies,
   itemCraftingPrivacyScaleRollout,
   packageDescriptor,
-  ITEM_CRAFTING_PRIVACY_SCALE_FEATURE_FLAG_ID,
 } from "../src/index.js";
 
 describe("@plasius/item-crafting", () => {
@@ -71,6 +74,50 @@ describe("@plasius/item-crafting", () => {
     expect(record.workshopTier).toBe("guild");
   });
 
+  it("strips non-contract fields from work-order records", () => {
+    const record = createItemCraftingWorkOrderRecord({
+      crafterSubjectId: "crafter-sub-1",
+      workshopId: "workshop-1",
+      discipline: "smithing",
+      workshopTier: "guild",
+      updatedAtIso: "2026-05-20T00:00:00.000Z",
+      profileName: "should-not-survive",
+      notes: "free-form private note",
+    } as never);
+
+    expect(Object.keys(record).sort()).toEqual([
+      "crafterSubjectId",
+      "discipline",
+      "updatedAtIso",
+      "workshopId",
+      "workshopTier",
+    ]);
+    expect("profileName" in record).toBe(false);
+    expect("notes" in record).toBe(false);
+  });
+
+  it("rejects blank work-order identifiers", () => {
+    expect(() =>
+      createItemCraftingWorkOrderRecord({
+        crafterSubjectId: " ",
+        workshopId: "workshop-1",
+        discipline: "smithing",
+        workshopTier: "guild",
+        updatedAtIso: "2026-05-20T00:00:00.000Z",
+      })
+    ).toThrow("crafterSubjectId must be a non-empty string");
+
+    expect(() =>
+      createItemCraftingWorkOrderRecord({
+        crafterSubjectId: "crafter-sub-1",
+        workshopId: "",
+        discipline: "smithing",
+        workshopTier: "guild",
+        updatedAtIso: "2026-05-20T00:00:00.000Z",
+      })
+    ).toThrow("workshopId must be a non-empty string");
+  });
+
   it("rejects unsupported discipline or workshop tiers", () => {
     expect(isItemCraftingDiscipline("alchemy")).toBe(true);
     expect(isItemCraftingDiscipline("invalid")).toBe(false);
@@ -86,6 +133,16 @@ describe("@plasius/item-crafting", () => {
         updatedAtIso: "2026-05-20T00:00:00.000Z",
       })
     ).toThrow("discipline must be a supported item-crafting discipline");
+
+    expect(() =>
+      createItemCraftingWorkOrderRecord({
+        crafterSubjectId: "crafter-sub-1",
+        workshopId: "workshop-1",
+        discipline: "smithing",
+        workshopTier: "invalid" as never,
+        updatedAtIso: "2026-05-20T00:00:00.000Z",
+      })
+    ).toThrow("workshopTier must be a supported workshop tier");
   });
 
   it("validates positive throughput assumptions", () => {
@@ -107,5 +164,61 @@ describe("@plasius/item-crafting", () => {
         maxCraftingEventsPerMinute: 35_000,
       })
     ).toThrow("maxConcurrentWorkOrders must be a positive safe integer");
+  });
+
+  it("creates portable handoff hosts", () => {
+    const host = createPortableHandoffHost({
+      hostId: "authority-worker-a",
+      runtime: "worker",
+      transport: "queue",
+      capabilityFlags: ["replay-safe"],
+    });
+
+    expect(host.transport).toBe("queue");
+    expect(() => {
+      (host.capabilityFlags as string[]).push("mutate");
+    }).toThrow();
+  });
+
+  it("creates bounded retry policy metadata", () => {
+    const policy = createHandoffRetryPolicy({
+      timeoutMs: 1250,
+      maxAttempts: 3,
+      retryableFailureCodes: ["CRAFTING_TIMEOUT"],
+      terminalFailureCodes: ["APPRENTICESHIP_MISSING"],
+    });
+
+    expect(policy.maxAttempts).toBe(3);
+    expect(Object.isFrozen(policy)).toBe(true);
+  });
+
+  it("creates item-crafting handoff contracts", () => {
+    const contract = createItemCraftingHandoffContract({
+      handoffId: "handoff-1",
+      apprenticeshipReady: true,
+      discipline: "alchemy",
+      workshopTier: "guild",
+      sourceHost: {
+        hostId: "training-authority",
+        runtime: "server",
+        transport: "http",
+        capabilityFlags: ["trace-linked"],
+      },
+      targetHost: {
+        hostId: "crafting-authority",
+        runtime: "worker",
+        transport: "queue",
+        capabilityFlags: ["replay-safe"],
+      },
+      retryPolicy: {
+        timeoutMs: 1250,
+        maxAttempts: 3,
+        retryableFailureCodes: ["CRAFTING_TIMEOUT"],
+        terminalFailureCodes: ["APPRENTICESHIP_MISSING"],
+      },
+    });
+
+    expect(contract.targetHost.runtime).toBe("worker");
+    expect(contract.retryPolicy.timeoutMs).toBe(1250);
   });
 });
