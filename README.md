@@ -25,6 +25,7 @@ npm install @plasius/item-crafting
 - apprenticeship-gated access state
 - crafting discipline readiness
 - workshop boundary metadata
+- privacy-safe crafting work-order payloads and workshop throughput assumptions
 - portable host descriptors for training-to-crafting handoffs
 - bounded retry and failure-policy metadata for handoff contracts
 
@@ -42,6 +43,9 @@ import {
   createHandoffRetryPolicy,
   createItemCraftingAccessState,
   createItemCraftingHandoffContract,
+  createItemCraftingWorkOrderRecord,
+  defaultItemCraftingThroughputAssumptions,
+  itemCraftingPrivacyScaleRollout,
 } from "@plasius/item-crafting";
 
 const state = createItemCraftingAccessState({
@@ -50,7 +54,17 @@ const state = createItemCraftingAccessState({
   workshopTier: "local",
 });
 
-console.log(state.workshopTier);
+const workOrder = createItemCraftingWorkOrderRecord({
+  crafterSubjectId: "crafter-sub-1",
+  workshopId: "workshop-1",
+  discipline: state.discipline,
+  workshopTier: state.workshopTier,
+  updatedAtIso: new Date().toISOString(),
+});
+
+console.log(itemCraftingPrivacyScaleRollout.featureFlagId);
+console.log(defaultItemCraftingThroughputAssumptions.maxConcurrentWorkOrders);
+console.log(workOrder.workshopId);
 
 const retryPolicy = createHandoffRetryPolicy({
   timeoutMs: 1250,
@@ -81,6 +95,23 @@ const handoff = createItemCraftingHandoffContract({
 
 console.log(handoff.targetHost.transport);
 ```
+
+## Privacy And Scale Baseline
+
+The package exports an inherited rollout descriptor for the cross-repo feature
+flag `isekai.training-progression.privacy-scale.enabled`.
+
+When that rollout is enabled, package consumers should prefer the minimal
+`ItemCraftingWorkOrderRecord` contract:
+
+- `crafterSubjectId` is the only player-linked identifier and is expected to be
+  pseudonymous
+- profile names, chat text, payment details, and free-form work notes are
+  outside the package contract
+- `itemCraftingFieldPolicies` documents the retention and sensitivity
+  expectation for every exported work-order field
+- `defaultItemCraftingThroughputAssumptions` publishes the validated workshop
+  and crafting-event envelope used by the package docs and tests
 
 ## Governance
 
