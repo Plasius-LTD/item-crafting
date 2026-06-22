@@ -1,6 +1,6 @@
 {
   "name": "@plasius/item-crafting",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "Apprenticeship-gated item-crafting access and authority boundary contracts for Plasius",
   "type": "module",
   "sideEffects": false,
