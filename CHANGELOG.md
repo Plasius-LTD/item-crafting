@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
   - (placeholder)
 
 - **Fixed**
-  - (placeholder)
+  - Reject malformed work-order timestamps and invalid handoff metadata before freezing item-crafting contracts.
 
 - **Security**
   - (placeholder)
