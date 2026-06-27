@@ -31,6 +31,26 @@ describe("@plasius/item-crafting", () => {
     expect(state.discipline).toBe("smithing");
   });
 
+  it("supports additional access-state and handoff host variants", () => {
+    expect(
+      createItemCraftingAccessState({
+        apprenticeshipReady: false,
+        discipline: "tailoring",
+        workshopTier: "academy",
+      }).workshopTier
+    ).toBe("academy");
+
+    const host = createPortableHandoffHost({
+      hostId: "training-browser",
+      runtime: "browser",
+      transport: "in-process",
+      capabilityFlags: ["academy-linked"],
+    });
+
+    expect(host.runtime).toBe("browser");
+    expect(host.transport).toBe("in-process");
+  });
+
   it("rejects invalid item-crafting access-state payloads", () => {
     expect(() =>
       createItemCraftingAccessState({
@@ -39,6 +59,14 @@ describe("@plasius/item-crafting", () => {
         workshopTier: "local",
       })
     ).toThrow("discipline must be a supported item-crafting discipline");
+
+    expect(() =>
+      createItemCraftingAccessState({
+        apprenticeshipReady: true,
+        discipline: "smithing",
+        workshopTier: "invalid" as never,
+      })
+    ).toThrow("workshopTier must be a supported workshop tier");
   });
 
   it("exports the privacy and scale rollout metadata", () => {
@@ -165,6 +193,16 @@ describe("@plasius/item-crafting", () => {
         updatedAtIso: "2026-02-31T00:00:00.000Z",
       })
     ).toThrow("updatedAtIso must be an ISO-8601 timestamp");
+
+    expect(() =>
+      createItemCraftingWorkOrderRecord({
+        crafterSubjectId: "crafter-sub-1",
+        workshopId: "workshop-1",
+        discipline: "smithing",
+        workshopTier: "guild",
+        updatedAtIso: "not-a-date",
+      })
+    ).toThrow("updatedAtIso must be an ISO-8601 timestamp");
   });
 
   it("validates positive throughput assumptions", () => {
@@ -220,6 +258,24 @@ describe("@plasius/item-crafting", () => {
         capabilityFlags: ["replay-safe"],
       })
     ).toThrow("runtime must be a supported handoff runtime");
+
+    expect(() =>
+      createPortableHandoffHost({
+        hostId: "authority-worker-a",
+        runtime: "server",
+        transport: "telepathy" as never,
+        capabilityFlags: ["replay-safe"],
+      })
+    ).toThrow("transport must be a supported handoff transport");
+
+    expect(() =>
+      createPortableHandoffHost({
+        hostId: "authority-worker-a",
+        runtime: "server",
+        transport: "http",
+        capabilityFlags: [" "],
+      })
+    ).toThrow("capabilityFlags entry must be a non-empty string");
   });
 
   it("creates bounded retry policy metadata", () => {
@@ -247,11 +303,29 @@ describe("@plasius/item-crafting", () => {
     expect(() =>
       createHandoffRetryPolicy({
         timeoutMs: 1250,
+        maxAttempts: 0,
+        retryableFailureCodes: ["CRAFTING_TIMEOUT"],
+        terminalFailureCodes: ["APPRENTICESHIP_MISSING"],
+      })
+    ).toThrow("maxAttempts must be a positive safe integer");
+
+    expect(() =>
+      createHandoffRetryPolicy({
+        timeoutMs: 1250,
         maxAttempts: 3,
         retryableFailureCodes: [""],
         terminalFailureCodes: ["APPRENTICESHIP_MISSING"],
       })
     ).toThrow("retryableFailureCodes entry must be a non-empty string");
+
+    expect(() =>
+      createHandoffRetryPolicy({
+        timeoutMs: 1250,
+        maxAttempts: 3,
+        retryableFailureCodes: ["CRAFTING_TIMEOUT"],
+        terminalFailureCodes: [""],
+      })
+    ).toThrow("terminalFailureCodes entry must be a non-empty string");
   });
 
   it("creates item-crafting handoff contracts", () => {
@@ -311,5 +385,59 @@ describe("@plasius/item-crafting", () => {
         },
       })
     ).toThrow("handoffId must be a non-empty string");
+
+    expect(() =>
+      createItemCraftingHandoffContract({
+        handoffId: "handoff-2",
+        apprenticeshipReady: true,
+        discipline: "unknown" as never,
+        workshopTier: "guild",
+        sourceHost: {
+          hostId: "training-authority",
+          runtime: "server",
+          transport: "http",
+          capabilityFlags: ["trace-linked"],
+        },
+        targetHost: {
+          hostId: "crafting-authority",
+          runtime: "worker",
+          transport: "queue",
+          capabilityFlags: ["replay-safe"],
+        },
+        retryPolicy: {
+          timeoutMs: 1250,
+          maxAttempts: 3,
+          retryableFailureCodes: ["CRAFTING_TIMEOUT"],
+          terminalFailureCodes: ["APPRENTICESHIP_MISSING"],
+        },
+      })
+    ).toThrow("discipline must be a supported item-crafting discipline");
+
+    expect(() =>
+      createItemCraftingHandoffContract({
+        handoffId: "handoff-2",
+        apprenticeshipReady: true,
+        discipline: "alchemy",
+        workshopTier: "invalid" as never,
+        sourceHost: {
+          hostId: "training-authority",
+          runtime: "server",
+          transport: "http",
+          capabilityFlags: ["trace-linked"],
+        },
+        targetHost: {
+          hostId: "crafting-authority",
+          runtime: "worker",
+          transport: "queue",
+          capabilityFlags: ["replay-safe"],
+        },
+        retryPolicy: {
+          timeoutMs: 1250,
+          maxAttempts: 3,
+          retryableFailureCodes: ["CRAFTING_TIMEOUT"],
+          terminalFailureCodes: ["APPRENTICESHIP_MISSING"],
+        },
+      })
+    ).toThrow("workshopTier must be a supported workshop tier");
   });
 });
