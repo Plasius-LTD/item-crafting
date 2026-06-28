@@ -222,6 +222,10 @@ function assertNonEmptyStringArray(
   values: readonly string[],
   label: string,
 ): readonly string[] {
+  if (!Array.isArray(values)) {
+    throw new Error(`${label} must be an array of non-empty strings`);
+  }
+
   for (const value of values) {
     assertNonEmptyString(value, `${label} entry`);
   }
