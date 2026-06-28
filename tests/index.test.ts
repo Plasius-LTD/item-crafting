@@ -326,6 +326,15 @@ describe("@plasius/item-crafting", () => {
         terminalFailureCodes: [""],
       })
     ).toThrow("terminalFailureCodes entry must be a non-empty string");
+
+    expect(() =>
+      createHandoffRetryPolicy({
+        timeoutMs: 1250,
+        maxAttempts: 3,
+        retryableFailureCodes: "CRAFTING_TIMEOUT" as never,
+        terminalFailureCodes: ["APPRENTICESHIP_MISSING"],
+      })
+    ).toThrow("retryableFailureCodes must be an array of non-empty strings");
   });
 
   it("creates item-crafting handoff contracts", () => {
