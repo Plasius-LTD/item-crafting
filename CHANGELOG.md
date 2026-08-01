@@ -11,6 +11,20 @@ All notable changes to this project will be documented in this file.
   - (placeholder)
 
 - **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
+## [0.1.5] - 2026-08-01
+
+- **Added**
+  - (placeholder)
+
+- **Changed**
+  - (placeholder)
+
+- **Fixed**
   - Reject malformed work-order timestamps and invalid handoff metadata before freezing item-crafting contracts.
 
 - **Security**
@@ -40,3 +54,4 @@ All notable changes to this project will be documented in this file.
 
 [0.1.3]: https://github.com/Plasius-LTD/item-crafting/releases/tag/v0.1.3
 [0.1.4]: https://github.com/Plasius-LTD/item-crafting/releases/tag/v0.1.4
+[0.1.5]: https://github.com/Plasius-LTD/item-crafting/releases/tag/v0.1.5
