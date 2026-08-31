@@ -8,13 +8,17 @@ All notable changes to this project will be documented in this file.
   - (placeholder)
 
 - **Changed**
+  - Bound npm publication to the exact prepared `main` commit after successful push-triggered CI.
   - (placeholder)
 
 - **Fixed**
+  - Added exact-commit CI dispatch and disabled package-manager cache finalization in both hosted validation jobs.
   - (placeholder)
 
 - **Security**
+  - Removed the npm write-token path, added a fail-closed npm 11.5.1-or-newer OIDC guard, and denied fork PR code access to reviewed CI.
   - Pinned patched transitive npm dependencies to clear the current audit baseline.
+  - Moved reviewed CI to explicit GitHub-hosted runners while retaining the same-repository pull-request guard.
   - (placeholder)
 
 ## [0.1.5] - 2026-08-01
