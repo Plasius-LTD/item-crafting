@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- **Added**
+  - (placeholder)
+
+- **Changed**
+  - (placeholder)
+
+- **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
+## [0.1.13] - 2026-11-22
+
 - Refresh supported npm dependency and security tooling baselines; preserve runtime API contracts (weekly maintenance, 2026-11-22).
 
 - **Added**
@@ -183,3 +197,4 @@ All notable changes to this project will be documented in this file.
 [0.1.10]: https://github.com/Plasius-LTD/item-crafting/releases/tag/v0.1.10
 [0.1.11]: https://github.com/Plasius-LTD/item-crafting/releases/tag/v0.1.11
 [0.1.12]: https://github.com/Plasius-LTD/item-crafting/releases/tag/v0.1.12
+[0.1.13]: https://github.com/Plasius-LTD/item-crafting/releases/tag/v0.1.13
